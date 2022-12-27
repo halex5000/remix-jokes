@@ -7,7 +7,7 @@ import { db } from "~/utils/db.server";
 
 export const loader = async () => {
   return json({
-    jokeListItems: await db.joke.findMany()
+    jokes: await db.joke.findMany()
   })
 }
 
@@ -41,7 +41,7 @@ export default function JokesRoute() {
             <p>Here are a few more jokes to check out:</p>
             <ul>
               {
-                data.jokeListItems.map(joke => (
+                data.jokes.map(joke => (
                   <li key={joke.id}>
                     <Link to={joke.id}>{joke.name}</Link>
                   </li>
