@@ -1,3 +1,23 @@
+import { PrismaClient } from "@prisma/client";
+
+let dbClient: PrismaClient;
+
+declare global {
+  var __db: PrismaClient | undefined;
+}
+
+// this is needed because in development we don't want to restart
+// the server with every change, but we want to make sure we don't
+// create a new connection to the DB with every change either.
+if (process.env.NODE_ENV === "production") {
+  dbClient = new PrismaClient();
+} else {
+  if (!global.__db) {
+    global.__db = new PrismaClient();
+  }
+  dbClient = global.__db;
+}
+
 const jokes: Joke[] = [
   {
     id: "1",
@@ -61,26 +81,16 @@ type CreateParams = {
 const db = {
   joke: {
     async create({data}: CreateParams) {
-      jokes.push({
-        id: (jokes.length + 1).toString(),
-        name: data.name,
-        content: data.content
-      })
+      return dbClient.joke.create({data})
     },
     async count(): Promise<number> {
-      return jokes.length;
+      return dbClient.joke.count();
     },
     async findMany(params?: FindManyParams): Promise<Joke[]> {
-      if (!params) return jokes;
-      const index = params.skip || 1;
-      if (index) {
-        const joke = jokes[index];
-        if (joke) return [joke]
-      }
-      return [];
+      return dbClient.joke.findMany(params);
     },
-    async findUnique({where: {id}}: FindUniqueParams): Promise<Joke | undefined> {
-      return jokes.find(joke => joke.id === id)
+    async findUnique(params: FindUniqueParams): Promise<Joke | null> {
+      return dbClient.joke.findUnique(params);
     }
   }
 }
